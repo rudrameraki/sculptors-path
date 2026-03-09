@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="The Path">
+<meta name="theme-color" content="#080604">
+<title>The Sculptor's Path</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Cinzel:wght@400;600;900&family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#080604; --bg2:#0f0d08; --bg3:#16130d; --bg4:#1e1a11;
+  --gold:#c8a45a; --gold2:#e8c878; --gold3:#f8e8a8; --gold-dim:#6a5228;
+  --ember:#d4601a; --ember2:#f07828; --jade:#4a8060;
+  --text:#ede0c4; --text-dim:#9a8060; --text-faint:#4a3c24;
+  --border:rgba(200,164,90,0.12); --borderf:rgba(255,255,255,0.035);
+  --ink:#1a1408;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;background:var(--bg)}
+body{color:var(--text);font-family:'IM Fell English',Georgia,serif;font-size:15px;line-height:1.55;overscroll-behavior:none}
+#app{display:flex;flex-direction:column;height:100vh;height:100dvh;position:relative}
+
+/* ── Grain overlay ── */
+#app::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:0;opacity:.5}
+
+/* ── Header ── */
+#hdr{padding:16px 20px 0;text-align:center;flex-shrink:0;position:relative;z-index:1}
+.om{font-size:14px;color:var(--gold-dim);animation:breathe 5s ease-in-out infinite;letter-spacing:6px}
+@keyframes breathe{0%,100%{opacity:.2}50%{opacity:.5}}
+.eyebrow{font-family:'Cinzel',serif;font-size:7px;letter-spacing:5px;color:var(--text-faint);text-transform:uppercase;margin:3px 0}
+h1{font-family:'Cinzel Decorative',serif;font-size:14px;color:var(--gold2);letter-spacing:2px;font-weight:400;text-shadow:0 0 30px rgba(200,164,90,0.3)}
+.hdr-orn{display:flex;align-items:center;gap:10px;margin:8px 20px 0}
+.hdr-line{flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--gold-dim) 40%,var(--gold-dim) 60%,transparent)}
+.hdr-gem{width:5px;height:5px;background:var(--gold-dim);transform:rotate(45deg);flex-shrink:0}
+
+/* ── Nav ── */
+#nav{display:flex;padding:8px 8px 0;gap:2px;flex-shrink:0;position:relative;z-index:1}
+.ntab{flex:1;padding:7px 1px 6px;background:transparent;border:1px solid transparent;border-radius:6px;
+  font-family:'Cinzel',serif;font-size:6.5px;letter-spacing:.3px;color:var(--text-faint);
+  cursor:pointer;text-transform:uppercase;transition:all .25s;line-height:1.3;text-align:center}
+.ntab span{display:block;font-size:11px;margin-bottom:2px}
+.ntab.active{background:rgba(200,164,90,0.08);border-color:rgba(200,164,90,0.18);color:var(--gold);
+  box-shadow:inset 0 1px 0 rgba(200,164,90,0.1)}
+
+/* ── Content ── */
+#content{flex:1;overflow-y:auto;padding:12px 13px 14px;position:relative;z-index:1;-webkit-overflow-scrolling:touch}
+#content::-webkit-scrollbar{display:none}
+
+/* ── Footer ── */
+#ftr{flex-shrink:0;padding:5px 20px 8px;border-top:1px solid var(--borderf);position:relative;z-index:1;
+  text-align:center;font-family:'Cinzel',serif;font-size:6px;letter-spacing:2.5px;color:var(--text-faint);text-transform:uppercase}
+
+/* ── Section headers ── */
+.sec-head{text-align:center;margin-bottom:12px}
+.sec-lesson{font-family:'Cinzel',serif;font-size:7px;letter-spacing:4px;color:var(--text-faint);text-transform:uppercase;margin-bottom:3px}
+.sec-title{font-family:'Cinzel Decorative',serif;font-size:13px;color:var(--gold);letter-spacing:1px;font-weight:400}
+.sec-sub{font-size:11px;color:var(--text-faint);font-style:italic;margin-top:3px}
+
+/* ── Cards ── */
+.card{background:var(--bg3);border:1px solid var(--borderf);border-radius:12px;padding:12px;
+  margin-bottom:8px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
+.card.done{background:rgba(200,164,90,0.06);border-color:rgba(200,164,90,0.18)}
+.card:active{transform:scale(0.984)}
+.cglow{position:absolute;inset:0;background:radial-gradient(circle at 50% 50%,rgba(212,96,26,.2),transparent 70%);opacity:0;transition:opacity .5s;pointer-events:none}
+
+/* ── Habit row ── */
+.hrow{display:flex;align-items:center;gap:10px}
+.hinfo{flex:1;min-width:0}
+.hname{font-size:13px;color:var(--text);font-weight:600;line-height:1.3}
+.hanchor{font-size:10px;color:var(--text-faint);font-style:italic;margin-top:2px}
+.hchk{width:24px;height:24px;border-radius:50%;flex-shrink:0;border:1px solid rgba(255,255,255,0.07);
+  display:flex;align-items:center;justify-content:center;transition:all .2s;font-size:12px}
+.hchk.done{background:var(--gold);border-color:var(--gold);color:var(--bg)}
+.pb{margin-top:8px}
+.pm{display:flex;justify-content:space-between;margin-bottom:3px}
+.pstage{font-family:'Cinzel',serif;font-size:7.5px;letter-spacing:1.5px;color:var(--gold);text-transform:uppercase}
+.pcnt{font-size:10px;color:var(--text-faint)}
+.pt{height:1.5px;background:rgba(255,255,255,0.04);border-radius:2px}
+.pf{height:100%;border-radius:2px;transition:width 1s ease}
+.wdots{display:flex;gap:3px;margin-top:6px}
+.wd{flex:1;height:2.5px;border-radius:2px;background:rgba(255,255,255,0.04);transition:background .3s}
+.wd.on{background:var(--gold)}
+.mastered-badge{font-family:'Cinzel',serif;font-size:6.5px;color:var(--gold);letter-spacing:1px;
+  border:1px solid rgba(200,164,90,0.25);padding:1px 5px;border-radius:6px;margin-left:5px;vertical-align:middle}
+
+/* ── Sumbar ── */
+.sumbar{text-align:center;margin-bottom:12px;padding:10px;background:var(--bg3);border:1px solid var(--borderf);border-radius:10px}
+.sumnum{font-family:'Cinzel Decorative',serif;font-size:24px;color:var(--gold2)}
+.sumlbl{font-family:'Cinzel',serif;font-size:7px;letter-spacing:3px;color:var(--text-faint);text-transform:uppercase;margin-top:2px}
+
+/* ── Stats row ── */
+.stats-row{display:flex;gap:7px;margin-bottom:12px}
+.stat-box{flex:1;background:var(--bg3);border:1px solid var(--borderf);border-radius:10px;padding:9px 6px;text-align:center}
+.stat-n{font-family:'Cinzel Decorative',serif;font-size:17px;color:var(--gold2)}
+.stat-l{font-family:'Cinzel',serif;font-size:6.5px;letter-spacing:1.5px;color:var(--text-faint);text-transform:uppercase;margin-top:2px}
+
+/* ── Chips ── */
+.chips{display:flex;flex-wrap:wrap;gap:5px}
+.chip{padding:5px 11px;border-radius:18px;cursor:pointer;background:rgba(255,255,255,0.02);
+  border:1px solid rgba(255,255,255,0.05);font-size:11px;color:var(--text-faint);transition:all .15s;font-family:inherit}
+.chip.active{background:rgba(200,164,90,0.12);border-color:rgba(200,164,90,0.25);color:var(--gold)}
+
+/* ── Form ── */
+.fsec{margin-bottom:14px}
+.fl{font-family:'Cinzel',serif;font-size:7.5px;letter-spacing:2.5px;color:var(--text-faint);
+  text-transform:uppercase;display:block;margin-bottom:6px}
+.fi{width:100%;padding:10px 12px;border-radius:9px;background:rgba(255,255,255,0.025);
+  border:1px solid rgba(255,255,255,0.06);color:var(--text);font-size:13px;
+  font-family:'IM Fell English',Georgia,serif;outline:none;transition:border-color .2s}
+.fi:focus{border-color:rgba(200,164,90,0.25)}
+.fi::placeholder{color:var(--text-faint);font-style:italic}
+.fhint{font-size:10px;color:var(--text-faint);font-style:italic;margin-top:4px;padding-left:2px}
+.coach{margin-top:10px;background:rgba(140,40,10,0.1);border:1px solid rgba(140,40,10,0.25);border-radius:11px;padding:13px;animation:fadeUp .3s ease}
+.coach-t{font-family:'Cinzel',serif;font-size:9px;color:#b04020;letter-spacing:1px;margin-bottom:6px}
+.coach-b{font-size:12px;color:#806050;line-height:1.7;margin-bottom:10px}
+.coach-a{width:100%;padding:9px;border-radius:9px;border:none;cursor:pointer;background:rgba(200,164,90,0.1);color:var(--gold);font-family:'Cinzel',serif;font-size:8.5px;letter-spacing:1.5px;text-transform:uppercase}
+.sbtn{width:100%;padding:12px;border-radius:11px;border:none;cursor:pointer;font-family:'Cinzel',serif;font-size:9.5px;letter-spacing:2.5px;text-transform:uppercase;transition:all .2s;margin-top:4px}
+.sbtn.on{background:rgba(200,164,90,0.15);color:var(--gold);border:1px solid rgba(200,164,90,0.2)}
+.sbtn.off{background:rgba(255,255,255,0.02);color:var(--text-faint);cursor:not-allowed;border:1px solid transparent}
+.prev-card{background:rgba(200,164,90,0.04);border:1px solid rgba(200,164,90,0.14);border-radius:11px;padding:12px;margin-bottom:14px;display:flex;gap:12px;align-items:center;animation:fadeUp .3s ease}
+
+/* ── Trophy panel ── */
+.trophy-panel{margin-top:16px;padding-top:14px;border-top:1px solid var(--borderf)}
+.trophy-head{font-family:'Cinzel',serif;font-size:7px;letter-spacing:4px;color:var(--text-faint);text-transform:uppercase;text-align:center;margin-bottom:10px}
+.trophy-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.trophy-item{background:rgba(200,164,90,0.05);border:1px solid rgba(200,164,90,0.18);border-radius:11px;padding:12px 6px 10px;text-align:center;position:relative}
+.trophy-deity-name{font-size:10px;color:var(--gold);margin-top:5px;font-family:'Cinzel',serif;letter-spacing:.5px}
+.trophy-habit{font-size:9px;color:var(--text-faint);font-style:italic;margin-top:2px;line-height:1.3}
+
+/* ── Pudhayal ── */
+.pud-btn{width:130px;height:130px;border-radius:50%;border:none;cursor:pointer;
+  background:radial-gradient(circle at 36% 30%,#f0dc88,#c89828 50%,#7a5808);
+  box-shadow:0 0 50px rgba(200,152,40,.25),0 8px 28px rgba(0,0,0,.7),inset 0 2px 8px rgba(255,255,255,.18);
+  display:flex;align-items:center;justify-content:center;margin:0 auto;
+  transition:transform .12s,box-shadow .12s;position:relative;overflow:hidden}
+.pud-btn:active{transform:scale(0.91);box-shadow:0 0 16px rgba(200,152,40,.1),0 3px 10px rgba(0,0,0,.5)}
+.pfill-track{height:6px;background:rgba(255,255,255,0.04);border-radius:20px;overflow:hidden;margin:6px 0}
+.pfill-bar{height:100%;border-radius:20px;background:linear-gradient(90deg,#c89828,#f0d850,#c89828);
+  background-size:200%;animation:shimmer 2.5s linear infinite;transition:width .6s ease}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.wisdom-card{background:rgba(200,164,90,0.04);border:1px solid rgba(200,164,90,0.12);border-radius:11px;
+  padding:14px 16px;margin:12px 0;animation:fadeUp .4s ease}
+.wisdom-text{font-size:13px;color:var(--text-dim);font-style:italic;line-height:1.8;text-align:center}
+.wisdom-attr{font-family:'Cinzel',serif;font-size:7.5px;letter-spacing:2px;color:var(--text-faint);text-transform:uppercase;text-align:center;margin-top:8px}
+.pot-shelf{margin-top:14px}
+.pot-shelf-title{font-family:'Cinzel',serif;font-size:7px;letter-spacing:3px;color:var(--text-faint);text-transform:uppercase;text-align:center;margin-bottom:9px}
+.pots-row{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.pot-item{text-align:center;width:56px}
+.pot-lbl{font-family:'Cinzel',serif;font-size:6.5px;color:var(--gold);letter-spacing:.5px;margin-top:3px;text-transform:uppercase}
+@keyframes coinFly{0%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) scale(0.2)}}
+.coin-burst{position:fixed;pointer-events:none;font-size:14px;z-index:9999;animation:coinFly .7s ease-out forwards}
+
+/* ── Havan ── */
+.havan-tabs{display:flex;gap:6px;margin-bottom:12px}
+.htab{flex:1;padding:8px 4px;border-radius:9px;border:1px solid rgba(255,255,255,0.05);
+  background:rgba(255,255,255,0.02);cursor:pointer;text-align:center;font-family:'Cinzel',serif;
+  font-size:8px;letter-spacing:1px;color:var(--text-faint);text-transform:uppercase;transition:all .2s}
+.htab.active{background:rgba(212,96,26,0.1);border-color:rgba(212,96,26,0.25);color:#d07040}
+.htab.active.forgive{background:rgba(100,140,200,0.08);border-color:rgba(100,140,200,0.2);color:#8ab0d8}
+.havan-input{width:100%;padding:10px 12px;border-radius:9px;background:rgba(255,255,255,0.025);
+  border:1px solid rgba(255,255,255,0.05);color:var(--text);font-size:13px;
+  font-family:'IM Fell English',Georgia,serif;outline:none;resize:none;min-height:58px}
+.havan-input:focus{border-color:rgba(212,96,26,0.25)}
+.havan-input.forgive:focus{border-color:rgba(100,140,200,0.2)}
+.havan-offer-btn{width:100%;padding:11px;border-radius:10px;border:none;cursor:pointer;
+  font-family:'Cinzel',serif;font-size:9px;letter-spacing:2px;text-transform:uppercase;transition:all .2s;margin-top:8px}
+.havan-offer-btn.fault{background:rgba(212,96,26,0.12);color:#d07040}
+.havan-offer-btn.forgive{background:rgba(100,140,200,0.1);color:#8ab0d8}
+.hlog-entry{border-radius:9px;padding:9px 11px;margin-bottom:6px}
+.hlog-entry.fault{background:rgba(212,96,26,0.04);border:1px solid rgba(212,96,26,0.1)}
+.hlog-entry.forgive{background:rgba(100,140,200,0.04);border:1px solid rgba(100,140,200,0.1)}
+.hlog-text{font-size:12px;font-style:italic}
+.hlog-text.fault{color:#a06040}
+.hlog-text.forgive{color:#7090b8}
+.hlog-meta{font-size:8.5px;color:var(--text-faint);margin-top:2px;font-family:'Cinzel',serif;letter-spacing:.5px}
+@keyframes fireFlicker{0%,100%{transform:scaleY(1) scaleX(1);transform-origin:center bottom}33%{transform:scaleY(1.04) scaleX(.97);transform-origin:center bottom}66%{transform:scaleY(.97) scaleX(1.02);transform-origin:center bottom}}
+@keyframes smokeRise{0%{opacity:.5;transform:translateY(0) scaleX(1)}100%{opacity:0;transform:translateY(-35px) scaleX(1.6)}}
+
+/* ── Garden ── */
+.garden-wrap{width:100%;max-width:340px;margin:0 auto 14px;border-radius:14px;overflow:hidden;border:1px solid var(--borderf)}
+.garden-input-area{background:var(--bg3);border:1px solid var(--borderf);border-radius:11px;padding:13px;margin-bottom:11px}
+.garden-entry-type{display:flex;gap:5px;margin:8px 0 10px}
+.gtype-btn{flex:1;padding:7px 3px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);
+  background:rgba(255,255,255,0.02);cursor:pointer;text-align:center;font-size:10px;color:var(--text-faint);transition:all .15s;font-family:inherit}
+.gtype-btn.active{background:rgba(74,128,96,0.14);border-color:rgba(74,128,96,0.28);color:#7abf90}
+.garden-offer-btn{width:100%;padding:11px;border-radius:10px;border:none;cursor:pointer;
+  background:rgba(74,128,96,0.12);color:#7abf90;font-family:'Cinzel',serif;
+  font-size:9px;letter-spacing:2px;text-transform:uppercase;transition:all .2s;margin-top:0}
+.glog-entry{background:rgba(74,128,96,0.04);border:1px solid rgba(74,128,96,0.1);
+  border-radius:9px;padding:9px 11px;margin-bottom:6px;display:flex;gap:8px;align-items:flex-start}
+.glog-icon{font-size:14px;flex-shrink:0;margin-top:1px}
+.glog-text{font-size:12px;color:#608070;font-style:italic;flex:1}
+.glog-meta{font-size:8.5px;color:var(--text-faint);margin-top:2px;font-family:'Cinzel',serif;letter-spacing:.5px}
+
+/* ── Dojo ── */
+.dojo-wrap{width:100%;max-width:340px;margin:0 auto 14px;border-radius:14px;overflow:hidden;border:1px solid var(--borderf)}
+.dojo-tier-btns{display:flex;gap:6px;margin:8px 0 10px}
+.dojo-tier{flex:1;padding:8px 3px;border-radius:9px;border:1px solid rgba(255,255,255,0.05);
+  background:rgba(255,255,255,0.02);cursor:pointer;text-align:center;transition:all .2s;font-family:inherit}
+.dojo-tier.active{border-color:rgba(200,164,90,0.28);background:rgba(200,164,90,0.1)}
+.dojo-tier-name{font-family:'Cinzel',serif;font-size:7.5px;letter-spacing:.5px;color:var(--gold);text-transform:uppercase;display:block}
+.dojo-tier-sub{font-size:9px;color:var(--text-faint);font-style:italic;margin-top:1px;display:block}
+.dojo-input-area{background:var(--bg3);border:1px solid var(--borderf);border-radius:11px;padding:13px;margin-bottom:11px}
+.dojo-log-entry{background:rgba(200,164,90,0.03);border:1px solid rgba(200,164,90,0.09);
+  border-radius:9px;padding:9px 11px;margin-bottom:6px;display:flex;gap:9px;align-items:flex-start}
+.dojo-log-tier{font-size:13px;flex-shrink:0;margin-top:1px}
+.dojo-log-text{font-size:12px;color:var(--text-dim);font-style:italic;flex:1}
+.dojo-log-meta{font-size:8.5px;color:var(--text-faint);margin-top:2px;font-family:'Cinzel',serif;letter-spacing:.5px}
+.dojo-log-btn{width:100%;padding:11px;border-radius:10px;border:none;cursor:pointer;
+  background:rgba(200,164,90,0.1);color:var(--gold);font-family:'Cinzel',serif;
+  font-size:9px;letter-spacing:2px;text-transform:uppercase;transition:all .2s}
+
+/* ── Empty ── */
+.empty{text-align:center;padding:28px 20px}
+.ei{font-size:30px;opacity:.18;margin-bottom:11px}
+.et{font-size:12px;color:var(--text-faint);font-style:italic;line-height:1.75}
+.ebtn{margin-top:14px;padding:8px 20px;background:rgba(200,164,90,0.1);border:1px solid rgba(200,164,90,0.2);
+  color:var(--gold);border-radius:9px;cursor:pointer;font-family:'Cinzel',serif;font-size:8.5px;letter-spacing:2px;text-transform:uppercase}
+
+/* ── Ornament divider ── */
+.orn{display:flex;align-items:center;gap:8px;margin:8px 0}
+.orn-l{flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--gold-dim),transparent)}
+.orn-d{font-size:7px;color:var(--gold-dim)}
+
+/* ── Animations ── */
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+@keyframes chisel{0%,100%{transform:scale(1)}50%{transform:scale(1.025)}}
+.strike{animation:chisel .3s ease}
+*{scrollbar-width:none}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="hdr">
+    <div class="om">· ॐ ·</div>
+    <div class="eyebrow">नमः शिवाय · The Ancient Path</div>
+    <h1>The Sculptor's Path</h1>
+    <div class="hdr-orn"><div class="hdr-line"></div><div class="hdr-gem"></div><div class="hdr-line"></div></div>
+  </div>
+  <div id="nav">
+    <button class="ntab active" onclick="show('today')"><span>🗿</span>Sculpt</button>
+    <button class="ntab" onclick="show('pudhayal')"><span>🪙</span>Goodness</button>
+    <button class="ntab" onclick="show('havan')"><span>🔥</span>Havan</button>
+    <button class="ntab" onclick="show('garden')"><span>🌱</span>Garden</button>
+    <button class="ntab" onclick="show('dojo')"><span>⚔️</span>Dojo</button>
+    <button class="ntab" onclick="show('add')"><span>+</span>Vow</button>
+  </div>
+  <div id="content"></div>
+  <div id="ftr">ॐ नमः शिवाय · कर्म · धर्म · 66 दिन</div>
+</div>
+
+<script>
+// ─── Constants ────────────────────────────────────────────────────────────────
+const GOAL=66, KEY='path_v8';
+const COINS_PER_POT=1000;
+const DNAMES=['M','T','W','T','F','S','S'];
+
+const DOMAINS=[
+  {id:'spirit',    label:'Spirit',       emoji:'✿',deity:'nataraja', color:'#a898c8'},
+  {id:'energy',    label:'Energy',       emoji:'⚡',deity:'hanuman',  color:'#c07840'},
+  {id:'skill',     label:'Skill',        emoji:'◎',deity:'saraswati',color:'#6890b8'},
+  {id:'relationships',label:'Relations', emoji:'❤',deity:'ganesha',  color:'#c8a040'},
+  {id:'wealth',    label:'Wealth',       emoji:'↑',deity:'ganesha',  color:'#a8c060'},
+  {id:'reputation',label:'Repute',       emoji:'★',deity:'nataraja', color:'#c8a458'},
+];
+
+const DEITY={
+  nataraja:{name:'Shiva Nataraja',color:'#c8a458'},
+  ganesha: {name:'Ganesha',       color:'#d4a040'},
+  hanuman: {name:'Hanuman',       color:'#c07040'},
+  saraswati:{name:'Saraswati',    color:'#88a8c8'},
+};
+
+const STAGES=[
+  {p:0,   label:'Pralaya',    sub:'The void before creation'},
+  {p:.12, label:'Srishti',    sub:'First form stirs'},
+  {p:.25, label:'Sthiti',     sub:'Divine geometry takes hold'},
+  {p:.42, label:'Samhara',    sub:'Old self dissolving'},
+  {p:.60, label:'Tirodhana',  sub:'Grace concealed reveals'},
+  {p:.80, label:'Anugraha',   sub:'The dance becomes visible'},
+  {p:1,   label:'Moksha',     sub:'The cosmic dance complete'},
+];
+
+const WISDOM_QUOTES=[
+  {q:"He who performs ten thousand acts of goodness and yet boasts of them has already spent the merit.",attr:"Yungu Zen Master"},
+  {q:"Virtue that knows itself to be virtue ceases to be virtue.",attr:"Ancient Wisdom"},
+  {q:"The tree laden with fruit bows its head. The empty branch stands tall.",attr:"Tamil Proverb"},
+  {q:"Do not think that a small kindness will leave no great blessing. Drops of water fill the ocean.",attr:"Ancient Wisdom"},
+  {q:"Act without expectation. Advance without striving. Succeed without taking credit.",attr:"Lao Tzu - Tao Te Ching"},
+  {q:"The superior man does not think always of his gains.",attr:"Confucius - Analects"},
+  {q:"Goodness performed in secret is a treasure that time cannot diminish.",attr:"Kautilya - Arthashastra"},
+  {q:"Give without remembering. Receive without forgetting.",attr:"Elizabeth Bibesco"},
+  {q:"Perform the act. Do not cling to its fruit. Be not the author of the fruit.",attr:"Bhagavad Gita - 2.47"},
+];
+
+const FAULT_PROMPTS=[
+  "What quality in me expressed itself today that I wish to offer to the fire?",
+  "Which shadow in me showed its face today?",
+  "What in me resisted grace — in word, thought, or action?",
+  "What would I not teach my child that I did today?",
+  "Which old pattern visited me again today?",
+];
+
+const FORGIVE_PROMPTS=[
+  "Who or what do you release to Agni's care today?",
+  "What burden are you ready to stop carrying?",
+  "What grievance will you let the fire transform?",
+  "Whose name do you offer to the flame today?",
+  "What resentment has lived in you long enough?",
+];
+
+const GARDEN_TYPES=[
+  {id:'people',   label:'People',   emoji:'✿', plant:'lotus'},
+  {id:'moment',   label:'Moment',   emoji:'❧', plant:'grass'},
+  {id:'gift',     label:'Gift',     emoji:'✾', plant:'flower'},
+  {id:'body',     label:'Body',     emoji:'♧', plant:'tree'},
+  {id:'learning', label:'Learning', emoji:'❦', plant:'leaf'},
+];
+
+const DOJO_TIERS={
+  abhyas:  {label:'Abhyas',        sub:'Daily practice',     emoji:'⚔', color:'#8a9870', pts:1},
+  pariksha:{label:'Pariksha',      sub:'A real test',        emoji:'▣', color:'#c8a458', pts:3},
+  agni:    {label:'Agni Pariksha', sub:'Ordeal by fire',     emoji:'✦', color:'#e8a020', pts:7},
+};
+
+const MUSASHI_QUOTES=[
+  "You have a right to perform your actions, but never to the fruits thereof.",
+  "Let right deeds be thy motive, not the fruit which comes from them.",
+  "The soul is never born nor dies — it is eternal and ancient.",
+  "A Kshatriya's greatest weapon is not the sword but the stillness behind it.",
+  "He who conquers his own mind conquers the world.",
+  "Arise, awake, and stop not till the goal is reached.",
+  "Strength is life. Weakness is death. Stand up and be strong.",
+];
+
+// ─── State ────────────────────────────────────────────────────────────────────
+function today(){return new Date().toISOString().split('T')[0];}
+function last7(){return Array.from({length:7},(_,i)=>{const d=new Date();d.setDate(d.getDate()-(6-i));return d.toISOString().split('T')[0];});}
+function streakOf(h={}){let s=0;const d=new Date();while(true){const k=d.toISOString().split('T')[0];if(h[k]){s++;d.setDate(d.getDate()-1);}else break;}return s;}
+function totalOf(h={}){return Object.values(h).filter(Boolean).length;}
+function stageFor(p){let s=STAGES[0];for(const st of STAGES)if(p>=st.p)s=st;return s;}
+
+function defaultState(){
+  return {
+    habits:[{
+      id:'demo1',name:'2 minutes of stillness',domain:'spirit',emoji:'✿',deity:'nataraja',
+      anchor:'After my first morning coffee',why:'Inner peace compounds',
+      history:{},color:'#a898c8',createdAt:new Date().toISOString().split('T')[0]
+    }],
+    pudhayal:{totalCoins:0,todayCoins:0,lastDate:'',completedPots:[]},
+    havan:{offerings:[],totalOfferings:0},
+    garden:{entries:[],totalEntries:0},
+    dojo:{trials:[],totalTrials:0},
+  };
+}
+
+function load(){
+  try{
+    const r=localStorage.getItem(KEY);
+    if(r){
+      const d=JSON.parse(r);
+      if(!d.havan)   d.havan  ={offerings:[],totalOfferings:0};
+      if(!d.garden)  d.garden ={entries:[],totalEntries:0};
+      if(!d.dojo)    d.dojo   ={trials:[],totalTrials:0};
+      if(!d.pudhayal)d.pudhayal={totalCoins:0,todayCoins:0,lastDate:'',completedPots:[]};
+      return d;
+    }
+  }catch(e){}
+  return defaultState();
+}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}}
+let state=load();
+
+// ─── SVG: Nataraja ─────────────────────────────────────────────────────────
+function natarajaSVG(progress,color='#c8a458',size=88,trophy=false){
+  const p=Math.min(1,Math.max(0,progress));
+  const rough=1-p; const id='n'+Math.random().toString(36).substr(2,4);
+  const ns=rough*9;
+  const cracks=rough>.05?`<line x1="30" y1="15" x2="22" y2="42" stroke="#1a0800" stroke-width="1.2" opacity="${rough*.7}"/><line x1="66" y1="12" x2="74" y2="38" stroke="#1a0800" stroke-width="1.2" opacity="${rough*.7}"/><line x1="38" y1="58" x2="34" y2="80" stroke="#1a0800" stroke-width="1" opacity="${rough*.5}"/>`:''
+  const fireOp=Math.max(0,(p-.5)*2);
+  const fire=p>.5?`<g opacity="${fireOp}"><circle cx="50" cy="62" r="44" fill="none" stroke="${color}" stroke-width="2" opacity="0.25"/>${Array.from({length:12},(_,i)=>{const a=(i/12)*Math.PI*2-Math.PI/2;const x1=50+44*Math.cos(a),y1=62+44*Math.sin(a),x2=50+(49+Math.sin(i*2.3)*4)*Math.cos(a),y2=62+(49+Math.sin(i*2.3)*4)*Math.sin(a);return`<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="${color}" stroke-width="1.8" opacity="0.55" stroke-linecap="round"/>`;}).join('')}</g>`:''
+  const jata=p>.55?`<path d="M43 44 Q46 32 50 28 Q54 32 57 44" fill="${color}" opacity="${(p-.55)/.45*.65}"/><path d="M50 28 Q53 22 56 18" stroke="${color}" stroke-width="2" fill="none" opacity="${(p-.55)/.45*.55}" stroke-linecap="round"/>`:''
+  const thirdEye=p>.65?`<ellipse cx="50" cy="48" rx="2.5" ry="1.5" fill="${color}" opacity="${(p-.65)/.35}"/>`:''
+  const face=p>.68?`<circle cx="45" cy="47" r="2" fill="#1a0a04" opacity="${(p-.68)/.32}"/><circle cx="55" cy="47" r="2" fill="#1a0a04" opacity="${(p-.68)/.32}"/><path d="M44 54 Q50 59 56 54" stroke="#1a0a04" stroke-width="1.5" fill="none" opacity="${(p-.68)/.32}" stroke-linecap="round"/>`:''
+  const damaru=p>.35?`<ellipse cx="24" cy="40" rx="5" ry="3.5" fill="${color}" opacity="${(p-.35)/.65*.85}" transform="rotate(-20 24 40)"/><line x1="26" y1="38" x2="16" y2="32" stroke="${color}" stroke-width="1.5" opacity="${(p-.35)/.65*.75}"/>`:''
+  const demon=p>.7?`<ellipse cx="48" cy="112" rx="10" ry="6" fill="${color}" opacity="${(p-.7)/.3*.45}" transform="rotate(5 48 112)"/><circle cx="48" cy="108" r="5" fill="${color}" opacity="${(p-.7)/.3*.4}"/>`:''
+  const glowDef=trophy?`<radialGradient id="tg${id}" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="${color}" stop-opacity="0.35"/><stop offset="100%" stop-color="${color}" stop-opacity="0"/></radialGradient>`:'';
+  const glowEl=trophy?`<ellipse cx="50" cy="65" rx="50" ry="58" fill="url(#tg${id})"/>`:''
+  return `<svg viewBox="0 0 100 130" width="${size}" height="${size*1.3}" style="overflow:visible;display:block;margin:0 auto">
+  <defs><filter id="ch${id}"><feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="3" result="noise" seed="7"/><feDisplacementMap in="SourceGraphic" in2="noise" scale="${ns}" xChannelSelector="R" yChannelSelector="G"/></filter>
+  <linearGradient id="st${id}" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#a09070"/><stop offset="45%" stop-color="#6e5e48"/><stop offset="100%" stop-color="#3a2e20"/></linearGradient>
+  <linearGradient id="fg${id}" x1="0%" y1="0%" x2="80%" y2="100%"><stop offset="0%" stop-color="${color}"/><stop offset="65%" stop-color="${color}" stop-opacity=".8"/><stop offset="100%" stop-color="#704820"/></linearGradient>
+  ${glowDef}</defs>
+  ${glowEl}${fire}
+  <rect x="14" y="6" width="72" height="118" rx="6" fill="url(#st${id})" ${rough>.03?`filter="url(#ch${id})"`:''}/>
+  ${cracks}
+  <g opacity="${p}">
+    <ellipse cx="50" cy="118" rx="17" ry="4.5" fill="${color}" opacity="0.35"/>
+    <rect x="37" y="113" width="26" height="7" rx="2" fill="${color}" opacity="0.3"/>
+    <ellipse cx="48" cy="100" rx="6" ry="14" fill="url(#fg${id})" transform="rotate(-5 48 100)"/>
+    <path d="M50 95 Q66 82 70 68" stroke="url(#fg${id})" stroke-width="8" fill="none" stroke-linecap="round"/>
+    <ellipse cx="50" cy="74" rx="10" ry="14" fill="url(#fg${id})"/>
+    <circle cx="50" cy="52" r="11" fill="url(#fg${id})"/>
+    ${jata}${thirdEye}
+    <path d="M57 66 Q70 57 72 46" stroke="url(#fg${id})" stroke-width="7" fill="none" stroke-linecap="round"/>
+    <circle cx="73" cy="44" r="5" fill="url(#fg${id})" opacity="${p>.3?(p-.3)/.7:0}"/>
+    <path d="M43 66 Q30 57 27 46" stroke="url(#fg${id})" stroke-width="7" fill="none" stroke-linecap="round"/>
+    ${damaru}
+    <path d="M55 74 Q65 82 67 93" stroke="url(#fg${id})" stroke-width="6" fill="none" stroke-linecap="round"/>
+    <path d="M45 74 Q34 82 30 93" stroke="url(#fg${id})" stroke-width="6" fill="none" stroke-linecap="round"/>
+    ${face}${demon}
+  </g>
+</svg>`;
+}
+
+// ─── SVG: Deity ───────────────────────────────────────────────────────────────
+function deitySVG(deity,color,size=60){
+  if(deity==='nataraja')return natarajaSVG(1,color,size,true);
+  const id=deity+Math.random().toString(36).substr(2,3);
+  const base=`<defs><radialGradient id="dg${id}" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="${color}" stop-opacity="0.35"/><stop offset="100%" stop-color="${color}" stop-opacity="0"/></radialGradient><linearGradient id="df${id}" x1="0%" y1="0%" x2="80%" y2="100%"><stop offset="0%" stop-color="${color}"/><stop offset="100%" stop-color="#704820"/></linearGradient></defs><ellipse cx="50" cy="65" rx="48" ry="56" fill="url(#dg${id})"/>`;
+  if(deity==='ganesha')return `<svg viewBox="0 0 100 130" width="${size}" height="${size*1.3}" style="overflow:visible;display:block;margin:0 auto">${base}<ellipse cx="50" cy="118" rx="18" ry="5" fill="${color}" opacity="0.3"/><ellipse cx="50" cy="90" rx="18" ry="22" fill="url(#df${id})"/><circle cx="50" cy="58" r="16" fill="url(#df${id})"/><path d="M44 68 Q36 74 34 82 Q34 90 40 92 Q42 94 44 90" stroke="url(#df${id})" stroke-width="7" fill="none" stroke-linecap="round"/><circle cx="44" cy="90" r="4" fill="url(#df${id})"/><ellipse cx="32" cy="56" rx="10" ry="14" fill="url(#df${id})" opacity="0.75"/><ellipse cx="68" cy="56" rx="10" ry="14" fill="url(#df${id})" opacity="0.75"/><path d="M60 76 Q74 68 76 56" stroke="url(#df${id})" stroke-width="7" fill="none" stroke-linecap="round"/><circle cx="77" cy="52" r="6" fill="${color}" opacity="0.75"/><path d="M40 76 Q26 68 24 56" stroke="url(#df${id})" stroke-width="7" fill="none" stroke-linecap="round"/><path d="M38 44 Q50 28 62 44" fill="${color}" opacity="0.55"/><circle cx="44" cy="56" r="3" fill="#0e0905" opacity="0.65"/><circle cx="56" cy="56" r="3" fill="#0e0905" opacity="0.65"/></svg>`;
+  if(deity==='hanuman')return `<svg viewBox="0 0 100 130" width="${size}" height="${size*1.3}" style="overflow:visible;display:block;margin:0 auto">${base}<ellipse cx="50" cy="118" rx="16" ry="4.5" fill="${color}" opacity="0.3"/><path d="M58 105 Q72 100 78 88 Q82 76 76 66 Q72 58 66 60" stroke="url(#df${id})" stroke-width="6" fill="none" stroke-linecap="round"/><circle cx="66" cy="58" r="5" fill="url(#df${id})"/><ellipse cx="50" cy="88" rx="15" ry="20" fill="url(#df${id})"/><circle cx="50" cy="58" r="13" fill="url(#df${id})"/><path d="M40 48 Q50 32 60 48" fill="${color}" opacity="0.55"/><path d="M60 76 Q72 64 72 48" stroke="url(#df${id})" stroke-width="7" fill="none" stroke-linecap="round"/><path d="M40 76 Q26 64 22 52" stroke="url(#df${id})" stroke-width="7" fill="none" stroke-linecap="round"/><circle cx="45" cy="56" r="2.5" fill="#0e0905" opacity="0.7"/><circle cx="55" cy="56" r="2.5" fill="#0e0905" opacity="0.7"/></svg>`;
+  return natarajaSVG(1,color,size,true);
+}
+
+// ─── SVG: Pudhayal Pot ───────────────────────────────────────────────────────
+function potSVG(fill=1,size=58,dim=false){
+  const id='pt'+Math.random().toString(36).substr(2,3);
+  const gt=dim?'#5a4018':'#f0d880', gm=dim?'#3a2808':'#c89828', gd=dim?'#281808':'#886010';
+  const pc=dim?'#141008':'#181008'; const fH=Math.max(0,Math.min(1,fill))*30; const fY=68-fH;
+  return `<svg viewBox="0 0 100 100" width="${size}" height="${size}" style="overflow:visible;display:block;margin:0 auto"><defs><radialGradient id="pg${id}" cx="40%" cy="35%" r="60%"><stop offset="0%" stop-color="${gt}"/><stop offset="50%" stop-color="${gm}"/><stop offset="100%" stop-color="${gd}"/></radialGradient><radialGradient id="pb${id}" cx="40%" cy="30%" r="65%"><stop offset="0%" stop-color="#201408"/><stop offset="100%" stop-color="${pc}"/></radialGradient><clipPath id="pc${id}"><ellipse cx="50" cy="55" rx="28" ry="32"/></clipPath></defs>
+  <ellipse cx="50" cy="55" rx="28" ry="32" fill="url(#pb${id})"/>
+  <rect x="22" y="${fY}" width="56" height="${fH+10}" fill="url(#pg${id})" clip-path="url(#pc${id})" opacity="0.9"/>
+  <ellipse cx="50" cy="26" rx="22" ry="7" fill="${gm}" opacity="0.85"/><ellipse cx="50" cy="25" rx="20" ry="5.5" fill="${gt}" opacity="0.65"/>
+  <ellipse cx="49" cy="24" rx="14" ry="3" fill="white" opacity="0.15"/>
+  <ellipse cx="50" cy="86" rx="18" ry="5" fill="${gm}" opacity="0.6"/>
+  <text x="50" y="62" text-anchor="middle" font-size="11" fill="${gm}" opacity="${dim?.12:.35}" font-family="serif">ॐ</text>
+</svg>`;
+}
+
+// ─── SVG: Havan Kund ─────────────────────────────────────────────────────────
+function havanSVG(purity=0,mode='fault',size=130){
+  const p=Math.min(1,Math.max(0,purity));
+  const id='hv'+Math.random().toString(36).substr(2,3);
+  const isForgive=mode==='forgive';
+  const fc=isForgive?`rgba(100,160,220,${.5+p*.3})`:`rgba(220,100,20,${.6+p*.2})`;
+  const fc2=isForgive?`rgba(150,200,255,0.8)`:`rgba(255,180,40,0.85)`;
+  const glowC=isForgive?'#6090d0':'#c84000';
+  const smokeOp=Math.max(0,1-p*2.2);
+  return `<svg viewBox="0 0 160 160" width="${size}" height="${size}" style="overflow:visible;display:block;margin:0 auto">
+  <defs>
+    <radialGradient id="hg${id}" cx="50%" cy="80%" r="60%"><stop offset="0%" stop-color="${glowC}" stop-opacity="${.2+p*.2}"/><stop offset="100%" stop-color="${glowC}" stop-opacity="0"/></radialGradient>
+    <radialGradient id="hk${id}" cx="40%" cy="30%" r="70%"><stop offset="0%" stop-color="#504030"/><stop offset="100%" stop-color="#1a1008"/></radialGradient>
+  </defs>
+  <ellipse cx="80" cy="148" rx="55" ry="14" fill="url(#hg${id})"/>
+  ${smokeOp>.05?`<ellipse cx="72" cy="42" rx="8" ry="18" fill="#383838" opacity="${smokeOp*.3}"/><ellipse cx="88" cy="36" rx="6" ry="14" fill="#484848" opacity="${smokeOp*.22}"/>`:``}
+  <g style="animation:fireFlicker 1.9s ease-in-out infinite;transform-origin:80px 95px">
+    <path d="M55 110 Q58 80 70 65 Q80 50 80 35 Q90 50 92 65 Q104 80 105 110 Z" fill="${fc}" opacity="0.75"/>
+    <path d="M62 110 Q65 86 74 72 Q80 58 80 44 Q86 58 86 72 Q94 86 98 110 Z" fill="${fc2}" opacity="0.8"/>
+    <path d="M69 110 Q71 90 78 78 Q80 66 80 54 Q82 66 82 78 Q89 90 91 110 Z" fill="${p>.3?(isForgive?'#d0e8ff':'#ffe080'):'#ff7020'}" opacity="${.65+p*.2}"/>
+  </g>
+  <rect x="30" y="100" width="100" height="48" rx="4" fill="url(#hk${id})"/>
+  <polygon points="20,95 30,100 30,148 18,142" fill="#2a1e10"/>
+  <polygon points="140,95 130,100 130,148 142,142" fill="#18100a"/>
+  <rect x="18" y="138" width="124" height="16" rx="3" fill="#3a2a18"/>
+  <rect x="20" y="92" width="120" height="12" rx="3" fill="#4a3428"/>
+  <rect x="22" y="93" width="116" height="7" rx="2" fill="#5a4030"/>
+  <text x="80" y="128" text-anchor="middle" font-size="17" fill="#c9a040" opacity="0.3" font-family="serif">ॐ</text>
+  <rect x="22" y="92" width="116" height="3" rx="1" fill="rgba(255,220,100,0.1)"/>
+  ${p>.1?`<ellipse cx="80" cy="110" rx="${20*Math.min(1,p*2)}" ry="3" fill="rgba(180,140,80,${Math.min(.35,p*.45)})"/>`:``}
+</svg>`;
+}
+
+// ─── SVG: Garden ─────────────────────────────────────────────────────────────
+function gardenSVG(entries, size){
+  size = size || 220;
+  var total = entries.length;
+  var skyL = Math.min(1, total/50);
+  var id = 'gd1';
+  
+  // Build plants string without nested template literals
+  var plants = '';
+  var colors = ['#c87090','#d890a8','#f0c840','#e87030','#d070a0'];
+  var greens = ['#2a5020','#3a6028','#4a7030'];
+  
+  for(var i=0; i < Math.min(entries.length, 30); i++){
+    var e = entries[i];
+    var x = 20 + (i%14)*22 + Math.sin(i*1.3)*6;
+    var y = 145 - Math.floor(i/14)*18;
+    var type = GARDEN_TYPES.find(function(g){ return g.id === e.type; }) || GARDEN_TYPES[0];
+    var h = 8 + Math.min(i,10)*1.5;
+    var col = colors[i % colors.length];
+    var gr = greens[i % greens.length];
+    
+    if(type.plant === 'tree'){
+      plants += '<g transform="translate(' + x + ',' + y + ')">';
+      plants += '<rect x="-2" y="' + (-h) + '" width="4" height="' + h + '" fill="#3a2a10"/>';
+      plants += '<circle cx="0" cy="' + (-h-8) + '" r="9" fill="' + gr + '" opacity="0.75"/>';
+      plants += '<circle cx="-4" cy="' + (-h-5) + '" r="5" fill="#3a6028" opacity="0.55"/>';
+      plants += '</g>';
+    } else if(type.plant === 'lotus'){
+      plants += '<g transform="translate(' + x + ',' + y + ')">';
+      plants += '<ellipse cx="0" cy="-2" rx="7" ry="3" fill="#1a3820" opacity="0.45"/>';
+      plants += '<circle cx="0" cy="' + (-h*.5-3) + '" r="5" fill="' + col + '" opacity="0.7"/>';
+      plants += '</g>';
+    } else if(type.plant === 'flower'){
+      plants += '<g transform="translate(' + x + ',' + y + ')">';
+      plants += '<rect x="-1" y="' + (-h) + '" width="2" height="' + h + '" fill="#2a5020" opacity="0.8"/>';
+      plants += '<circle cx="0" cy="' + (-h) + '" r="4" fill="' + col + '" opacity="0.75"/>';
+      plants += '</g>';
+    } else if(type.plant === 'grass'){
+      plants += '<g transform="translate(' + x + ',' + y + ')">';
+      plants += '<path d="M0 0 Q-3 ' + (-h*.6) + ' 0 ' + (-h) + '" stroke="#3a6028" stroke-width="1.5" fill="none" opacity="0.7"/>';
+      plants += '<path d="M2 0 Q3 ' + (-h*.5) + ' 1 ' + (-h*.8) + '" stroke="#4a7030" stroke-width="1" fill="none" opacity="0.6"/>';
+      plants += '</g>';
+    } else {
+      plants += '<g transform="translate(' + x + ',' + y + ')">';
+      plants += '<path d="M0 0 Q2 ' + (-h*.4) + ' 0 ' + (-h) + ' Q-2 ' + (-h*.4) + ' 0 0" fill="' + gr + '" opacity="0.6"/>';
+      plants += '</g>';
+    }
+  }
+  
+  var sun = total >= 5 ? '<circle cx="290" cy="35" r="' + (12+skyL*8) + '" fill="#f0c840" opacity="' + (.3+skyL*.4) + '"/>' : '';
+  var water = total >= 20 ? '<ellipse cx="60" cy="152" rx="' + (8+Math.min(total-20,20)*.5) + '" ry="4" fill="#1a3850" opacity="0.5"/>' : '';
+  var empty = total === 0 ? '<text x="170" y="120" text-anchor="middle" font-size="11" fill="rgba(200,164,90,0.2)" font-family="serif" font-style="italic">Plant your first gratitude</text>' : '';
+  
+  var skyColor = 'hsl(' + (210-skyL*30) + ',' + (30+skyL*30) + '%,' + (6+skyL*8) + '%)';
+  
+  return '<svg viewBox="0 0 340 220" width="100%" height="' + size + '" style="display:block">'
+    + '<defs><linearGradient id="sky' + id + '" x1="0%" y1="0%" x2="0%" y2="100%">'
+    + '<stop offset="0%" stop-color="' + skyColor + '"/>'
+    + '<stop offset="100%" stop-color="#0e1608"/>'
+    + '</linearGradient></defs>'
+    + '<rect width="340" height="220" fill="url(#sky' + id + ')"/>'
+    + sun
+    + '<path d="M0 140 L60 80 L120 130 L180 70 L240 120 L300 60 L340 100 L340 160 L0 160Z" fill="#0e1a0a" opacity="0.7"/>'
+    + '<rect x="0" y="160" width="340" height="60" fill="#1a2210"/>'
+    + '<rect x="0" y="155" width="340" height="15" fill="#253015" rx="2"/>'
+    + water + plants
+    + '<path d="M170 220 Q165 180 168 160" stroke="#3a3020" stroke-width="8" fill="none" opacity="0.35" stroke-linecap="round"/>'
+    + empty
+    + '<text x="10" y="215" font-size="9" fill="rgba(200,164,90,0.2)" font-family="Cinzel,serif">' + total + ' planted</text>'
+    + '</svg>';
+}
+
+// ─── SVG: Dojo ─────────────────────────────────────────────────────────────
+function dojoSVG(trials, size){
+  size = size || 200;
+  var total = trials.length;
+  var pts = trials.reduce(function(a,t){ return a + DOJO_TIERS[t.tier].pts; }, 0);
+  var lvl = Math.min(10, Math.floor(pts/8));
+  var cuts = Math.min(total, 25);
+  
+  // Cut marks on post
+  var cutMarks = '';
+  for(var i=0; i<cuts; i++){
+    var y = 30 + i*(90/25);
+    var tier = (trials[i] && trials[i].tier) || 'abhyas';
+    var col = DOJO_TIERS[tier].color;
+    var sw = tier==='agni' ? 2.5 : 1.5;
+    var op = tier==='agni' ? 0.9 : 0.6;
+    cutMarks += '<line x1="175" y1="' + y + '" x2="215" y2="' + (y+4) + '" stroke="' + col + '" stroke-width="' + sw + '" opacity="' + op + '"/>';
+  }
+  
+  // Second post at level 4
+  var post2 = '';
+  if(lvl >= 4){
+    post2 += '<rect x="245" y="20" width="18" height="110" fill="#3a2810" rx="2"/>';
+    post2 += '<rect x="242" y="110" width="24" height="8" fill="#2a1808" rx="1"/>';
+    var cuts2 = Math.min(total > 15 ? total-15 : 0, 20);
+    for(var j=0; j<cuts2; j++){
+      var y2 = 28 + j*(80/20);
+      var t2 = (trials[j+15] && trials[j+15].tier) || 'abhyas';
+      post2 += '<line x1="239" y1="' + y2 + '" x2="269" y2="' + (y2+3) + '" stroke="' + DOJO_TIERS[t2].color + '" stroke-width="1.5" opacity="0.5"/>';
+    }
+  }
+  
+  // Sword angle increases with level
+  var swordAngle = -30 + lvl*3;
+  var crown = lvl>=5 ? '<path d="M-8 -44 L-5 -52 L0 -47 L5 -52 L8 -44 Z" fill="#d4af37" opacity="0.8"/>' : '';
+  var quote = total > 0 ? MUSASHI_QUOTES[total % MUSASHI_QUOTES.length].substring(0, 55) + '...' : '';
+  
+  return '<svg viewBox="0 0 340 180" width="100%" height="' + size + '" style="display:block">'
+    + '<rect width="340" height="180" fill="#0a0c10"/>'
+    + '<rect x="0" y="0" width="340" height="180" fill="rgba(200,164,90,0.03)"/>'
+    + '<line x1="0" y1="148" x2="340" y2="148" stroke="rgba(200,164,90,0.07)" stroke-width="1"/>'
+    + '<rect x="8" y="10" width="1" height="138" fill="rgba(200,164,90,0.05)"/>'
+    + '<rect x="331" y="10" width="1" height="138" fill="rgba(200,164,90,0.05)"/>'
+    + '<text x="30" y="75" font-size="26" fill="rgba(200,164,90,0.06)" font-family="serif">धर्म</text>'
+    + '<text x="32" y="110" font-size="22" fill="rgba(200,164,90,0.04)" font-family="serif">कर्म</text>'
+    + '<rect x="183" y="18" width="22" height="120" fill="#3a2810" rx="2"/>'
+    + '<rect x="180" y="130" width="28" height="10" fill="#2a1808" rx="1"/>'
+    + '<rect x="180" y="14" width="28" height="8" fill="#2a1808" rx="1"/>'
+    + cutMarks + post2
+    + '<g transform="translate(100,140)">'
+    + '<ellipse cx="0" cy="10" rx="18" ry="4" fill="rgba(0,0,0,0.4)"/>'
+    + '<path d="M-4 0 L-6 38" stroke="#c8a458" stroke-width="5" fill="none" stroke-linecap="round" opacity="0.8"/>'
+    + '<path d="M4 0 L8 38" stroke="#c8a458" stroke-width="5" fill="none" stroke-linecap="round" opacity="0.8"/>'
+    + '<ellipse cx="0" cy="-14" rx="9" ry="14" fill="#c8a458" opacity="0.82"/>'
+    + '<circle cx="0" cy="-34" r="9" fill="#c8a458" opacity="0.85"/>'
+    + '<rect x="-9" y="-38" width="18" height="4" fill="' + (lvl>=5?'#e8c060':'#8a6830') + '" rx="2" opacity="0.8"/>'
+    + crown
+    + '<g transform="rotate(' + swordAngle + ' 0 -20)">'
+    + '<path d="M8 -20 L28 -32" stroke="#c8a458" stroke-width="5" fill="none" stroke-linecap="round" opacity="0.8"/>'
+    + '<line x1="28" y1="-32" x2="60" y2="-55" stroke="#d8d0c0" stroke-width="2" opacity="0.85"/>'
+    + '<line x1="28" y1="-28" x2="36" y2="-28" stroke="#c8a040" stroke-width="3" opacity="0.7" stroke-linecap="round"/>'
+    + '</g>'
+    + '<path d="M-8 -20 L-18 -28" stroke="#c8a458" stroke-width="5" fill="none" stroke-linecap="round" opacity="0.75"/>'
+    + '<circle cx="-3" cy="-35" r="1.5" fill="#0a0804" opacity="0.8"/>'
+    + '<circle cx="3" cy="-35" r="1.5" fill="#0a0804" opacity="0.8"/>'
+    + '</g>'
+    + (total > 0 ? '<text x="170" y="168" text-anchor="middle" font-size="8" fill="rgba(200,164,90,0.25)" font-family="serif" font-style="italic">"' + quote + '"</text>' : '')
+    + '<text x="10" y="168" font-size="8" fill="rgba(200,164,90,0.2)" font-family="Cinzel,serif">' + cuts + ' strikes - ' + pts + ' power</text>'
+    + '</svg>';
+}
+
+// ─── Navigation ───────────────────────────────────────────────────────────────
+let curView='today', havanMode='fault', havanInput='', gardenType='people', gardenInput='', dojoTier='abhyas', dojoInput='';
+let form={what:'',why:'',anchor:'',domain:'spirit'}, coach=null;
+const VIEWS=['today','pudhayal','havan','garden','dojo','add'];
+
+function show(v){
+  curView=v;
+  if(v!=='add'){form={what:'',why:'',anchor:'',domain:'spirit'};coach=null;}
+  document.querySelectorAll('.ntab').forEach((t,i)=>t.classList.toggle('active',VIEWS[i]===v));
+  render();
+}
+function render(){
+  const map={today:renderToday,pudhayal:renderPudhayal,havan:renderHavan,garden:renderGarden,dojo:renderDojo,add:renderAdd};
+  document.getElementById('content').innerHTML=(map[curView]||renderToday)();
+}
+
+// ─── SCULPT ──────────────────────────────────────────────────────────────────
+function renderToday(){
+  const t=today();
+  if(!state.habits.length) return `<div class="empty"><div class="ei">[statue]</div><div class="et"><em>Your destiny is not fixed.<br>Each vow you make rewrites your fate.<br>Begin your first 66-day sculpture.</em></div><button class="ebtn" onclick="show('add')">Make Your First Vow</button></div>`;
+  const done=state.habits.filter(h=>h.history[t]).length;
+  const l7=last7();
+  const cards=state.habits.map(h=>{
+    const isDone=!!h.history[t];
+    const tot=totalOf(h.history);
+    const p=Math.min(1,tot/GOAL);
+    const s=stageFor(p);
+    const str=streakOf(h.history);
+    const mastered=tot>=GOAL;
+    const dots=l7.map((d,i)=>`<div class="wd ${h.history[d]?'on':''}" title="${DNAMES[i]}"></div>`).join('');
+    const col=h.color||'#c8a458';
+    return `<div class="card ${isDone?'done':''}" id="c-${h.id}" onclick="tapHabit('${h.id}')">
+      <div class="cglow"></div>
+      <div class="hrow">
+        <div style="flex-shrink:0">${natarajaSVG(p,col,50)}</div>
+        <div class="hinfo">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start">
+            <div>
+              <div class="hname">${h.emoji} ${h.name}${mastered?`<span class="mastered-badge">MASTERED</span>`:''}</div>
+              <div class="hanchor">${h.anchor}</div>
+            </div>
+            <div class="hchk ${isDone?'done':''}">${isDone?'✓':''}</div>
+          </div>
+          <div class="pb">
+            <div class="pm"><span class="pstage">${mastered?'Moksha - ∞':s.label}</span><span class="pcnt">${tot}d${str>1?` - [fire]${str}`:''}</span></div>
+            <div class="pt"><div class="pf" style="width:${p*100}%;background:linear-gradient(90deg,${col}55,${col})"></div></div>
+          </div>
+          <div class="wdots">${dots}</div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Trophies panel
+  const trophies=state.habits.filter(h=>totalOf(h.history)>=GOAL);
+  const trophyPanel=trophies.length?`<div class="trophy-panel">
+    <div class="trophy-head">Trophy Hall — ${trophies.length} Consecrated</div>
+    <div class="trophy-grid">${trophies.map(h=>{
+      const d=DEITY[h.deity||'nataraja'];
+      return `<div class="trophy-item">${deitySVG(h.deity||'nataraja',d.color,52)}<div class="trophy-deity-name">${d.name}</div><div class="trophy-habit">${h.name}</div></div>`;
+    }).join('')}</div></div>`:''
+
+  return `<div class="sec-head"><div class="sec-lesson">Lesson I - Establish Destiny</div><div class="sec-title">Establish Destiny</div></div>
+  <div class="sumbar"><div class="sumnum">${done}<span style="font-size:14px;color:var(--text-faint)">/${state.habits.length}</span></div><div class="sumlbl">Chisel Strikes Today</div></div>
+  ${cards}${trophyPanel}
+  <div style="text-align:center;margin-top:8px;font-size:10px;color:var(--text-faint);font-style:italic">66 days consecrates the statue. The practice never ends.</div>`;
+}
+
+// ─── PUDHAYAL ────────────────────────────────────────────────────────────────
+function renderPudhayal(){
+  const p=state.pudhayal;
+  if(p.lastDate!==today()){p.todayCoins=0;p.lastDate=today();save();}
+  const tc=p.totalCoins||0, td=p.todayCoins||0;
+  const potsDone=Math.floor(tc/COINS_PER_POT), cur=tc%COINS_PER_POT;
+  const wisdomEvery=10, showWisdom=(tc>0&&tc%wisdomEvery===0);
+  const wq=WISDOM_QUOTES[Math.floor(tc/wisdomEvery)%WISDOM_QUOTES.length];
+  const wisdomCard=showWisdom?`<div class="wisdom-card"><div class="wisdom-text">"${wq.q}"</div><div class="wisdom-attr">— ${wq.attr}</div></div>`:``;
+  const shelf=potsDone>0?`<div class="pot-shelf"><div class="pot-shelf-title">Your Treasury - ${potsDone} Complete</div><div class="pots-row">
+    ${Array.from({length:potsDone},(_,i)=>`<div class="pot-item">${potSVG(1,50,false)}<div class="pot-lbl">${i+1}</div></div>`).join('')}
+    ${cur>0?`<div class="pot-item">${potSVG(cur/COINS_PER_POT,50,false)}<div class="pot-lbl">Now</div></div>`:``}
+  </div></div>`:``
+  return `<div class="sec-head"><div class="sec-lesson">Lesson III - Accumulate Goodness</div><div class="sec-title">Accumulate Goodness</div></div>
+  <div class="stats-row">
+    <div class="stat-box"><div class="stat-n">${tc.toLocaleString()}</div><div class="stat-l">Total Acts</div></div>
+    <div class="stat-box"><div class="stat-n">${td}</div><div class="stat-l">Today</div></div>
+    <div class="stat-box"><div class="stat-n">${potsDone}</div><div class="stat-l">Pudhayals</div></div>
+  </div>
+  <div style="text-align:center;margin-bottom:12px">
+    <button class="pud-btn" id="pudBtn" onclick="tapKindness(event)">${potSVG(cur/COINS_PER_POT,118)}</button>
+  </div>
+  <div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="font-family:'Cinzel',serif;font-size:8px;letter-spacing:1.5px;color:var(--gold)">CURRENT PUDHAYAL</span><span style="font-size:10px;color:var(--text-faint)">${cur} / ${COINS_PER_POT}</span></div>
+  <div class="pfill-track"><div class="pfill-bar" style="width:${(cur/COINS_PER_POT)*100}%"></div></div>
+  ${wisdomCard}
+  ${shelf}
+  <div style="text-align:center;margin-top:16px;font-size:11px;color:var(--text-faint);font-style:italic;line-height:1.75">Tap for every act of kindness — seen or unseen.<br>No target. No performance. Pure Nishkama Karma.</div>`;
+}
+
+// ─── HAVAN ───────────────────────────────────────────────────────────────────
+function renderHavan(){
+  const h=state.havan;
+  const totalOff=h.totalOfferings||0;
+  const purity=Math.min(1,totalOff/80);
+  const todayOff=(h.offerings||[]).filter(o=>o.date===today()).length;
+  const dayIdx=new Date().getDay();
+  const faultPrompt=FAULT_PROMPTS[dayIdx%FAULT_PROMPTS.length];
+  const forgivePrompt=FORGIVE_PROMPTS[dayIdx%FORGIVE_PROMPTS.length];
+  const recentLog=(h.offerings||[]).slice(-6).reverse().map(o=>`
+    <div class="hlog-entry ${o.type}">
+      <div class="hlog-text ${o.type}">"${o.text}"</div>
+      <div class="hlog-meta">${o.type==='fault'?'Offered to Agni':'Released to Agni'} - ${o.date}</div>
+    </div>`).join('');
+  return `<div class="sec-head"><div class="sec-lesson">Lesson II - Reform Faults</div><div class="sec-title">The Sacred Fire</div><div class="sec-sub">Reform faults - Release what you carry</div></div>
+  <div class="stats-row">
+    <div class="stat-box"><div class="stat-n">${totalOff}</div><div class="stat-l">Offerings</div></div>
+    <div class="stat-box"><div class="stat-n">${todayOff}</div><div class="stat-l">Today</div></div>
+    <div class="stat-box"><div class="stat-n">${Math.round(purity*100)}%</div><div class="stat-l">Purity</div></div>
+  </div>
+  <div style="text-align:center;margin-bottom:12px">${havanSVG(purity,havanMode,130)}</div>
+  <div class="havan-tabs">
+    <div class="htab ${havanMode==='fault'?'active':''}" onclick="setHavanMode('fault')">[fire] Reform a Fault</div>
+    <div class="htab ${havanMode==='forgive'?'active forgive':''}" onclick="setHavanMode('forgive')">[dove] Offer Forgiveness</div>
+  </div>
+  <div style="background:var(--bg3);border:1px solid var(--borderf);border-radius:11px;padding:13px;margin-bottom:11px">
+    <label style="font-family:'Cinzel',serif;font-size:8px;letter-spacing:2px;color:var(--text-faint);text-transform:uppercase;display:block;margin-bottom:8px">${havanMode==='fault'?faultPrompt:forgivePrompt}</label>
+    <textarea class="havan-input ${havanMode==='forgive'?'forgive':''}" id="havanTxt" placeholder="${havanMode==='fault'?'impatience - pride - harsh words - distraction...':'a name - a moment - a resentment you carry...'}" rows="2">${havanInput}</textarea>
+    <button class="havan-offer-btn ${havanMode==='fault'?'fault':'forgive'}" onclick="offerToFire()">
+      ${havanMode==='fault'?'[fire] Offer to Agni':'[dove] Release to Agni'}
+    </button>
+  </div>
+  <div style="text-align:center;margin-bottom:10px;font-size:11px;color:var(--text-faint);font-style:italic;line-height:1.7">
+    ${havanMode==='fault'?'Name it precisely. The fire transforms, not punishes.':'Forgiveness is not for them. It is for you. Agni carries what you release.'}
+  </div>
+  ${recentLog?`<div><div style="font-family:'Cinzel',serif;font-size:7px;letter-spacing:3px;color:var(--text-faint);text-transform:uppercase;text-align:center;margin-bottom:9px">Recent Offerings</div>${recentLog}</div>`:``}`;
+}
+
+// ─── GARDEN ──────────────────────────────────────────────────────────────────
+function renderGarden(){
+  const g=state.garden;
+  const entries=g.entries||[];
+  const todayEntries=entries.filter(e=>e.date===today()).length;
+  const recentLog=entries.slice(-5).reverse().map(e=>{
+    const type=GARDEN_TYPES.find(t=>t.id===e.type)||GARDEN_TYPES[0];
+    return `<div class="glog-entry"><div class="glog-icon">${type.emoji}</div><div><div class="glog-text">"${e.text}"</div><div class="glog-meta">${type.label} - ${e.date}</div></div></div>`;
+  }).join('');
+  const typeChips=GARDEN_TYPES.map(t=>`<div class="gtype-btn ${gardenType===t.id?'active':''}" onclick="setGardenType('${t.id}')">${t.emoji} ${t.label}</div>`).join('');
+  return `<div class="sec-head"><div class="sec-lesson">Lesson III - Accumulate Goodness</div><div class="sec-title">The Gratitude Garden</div><div class="sec-sub">What has been given to you today?</div></div>
+  <div class="stats-row">
+    <div class="stat-box"><div class="stat-n">${entries.length}</div><div class="stat-l">Planted</div></div>
+    <div class="stat-box"><div class="stat-n">${todayEntries}</div><div class="stat-l">Today</div></div>
+    <div class="stat-box"><div class="stat-n">${Math.floor(entries.length/10)}</div><div class="stat-l">Seasons</div></div>
+  </div>
+  <div class="garden-wrap">${gardenSVG(entries,180)}</div>
+  <div class="garden-input-area">
+    <label style="font-family:'Cinzel',serif;font-size:8px;letter-spacing:2px;color:var(--text-faint);text-transform:uppercase;display:block;margin-bottom:8px">What are you grateful for?</label>
+    <input class="fi" id="gardenTxt" type="text" placeholder="The morning light - a kind word - my health - a small win..." value="${gardenInput}" oninput="gardenInput=this.value">
+    <div class="garden-entry-type">${typeChips}</div>
+    <button class="garden-offer-btn" onclick="plantGratitude()">[seed] Plant This</button>
+  </div>
+  <div style="text-align:center;font-size:11px;color:var(--text-faint);font-style:italic;line-height:1.75">The garden never dies. Neglect does not destroy it.<br>Every gratitude planted stays forever.</div>
+  ${recentLog?`<div class="orn"><div class="orn-l"></div><div class="orn-d">✦</div><div class="orn-l"></div></div>${recentLog}`:``}`;
+}
+
+// ─── DOJO ─────────────────────────────────────────────────────────────────────
+function renderDojo(){
+  const d=state.dojo;
+  const trials=d.trials||[];
+  const pts=trials.reduce((a,t)=>a+DOJO_TIERS[t.tier].pts,0);
+  const todayTrials=trials.filter(t=>t.date===today()).length;
+  const tierBtns=Object.entries(DOJO_TIERS).map(([k,v])=>`
+    <div class="dojo-tier ${dojoTier===k?'active':''}" onclick="setDojoTier('${k}')">
+      <span class="dojo-tier-name">${v.emoji} ${v.label}</span>
+      <span class="dojo-tier-sub">${v.sub}</span>
+    </div>`).join('');
+  const recentLog=trials.slice(-5).reverse().map(t=>{
+    const tier=DOJO_TIERS[t.tier];
+    return `<div class="dojo-log-entry"><div class="dojo-log-tier">${tier.emoji}</div><div><div class="dojo-log-text">"${t.desc}"</div><div class="dojo-log-meta">${tier.label} - ${t.date}</div></div></div>`;
+  }).join('');
+  return `<div class="sec-head"><div class="sec-lesson">The Kshatriya's Training</div><div class="sec-title">The Way of the Sword</div><div class="sec-sub">Each strike is a rewriting of who you are</div></div>
+  <div class="stats-row">
+    <div class="stat-box"><div class="stat-n">${trials.length}</div><div class="stat-l">Strikes</div></div>
+    <div class="stat-box"><div class="stat-n">${pts}</div><div class="stat-l">Power</div></div>
+    <div class="stat-box"><div class="stat-n">${todayTrials}</div><div class="stat-l">Today</div></div>
+  </div>
+  <div class="dojo-wrap">${dojoSVG(trials,170)}</div>
+  <div class="dojo-input-area">
+    <label style="font-family:'Cinzel',serif;font-size:8px;letter-spacing:2px;color:var(--text-faint);text-transform:uppercase;display:block;margin-bottom:8px">What uncomfortable thing did you do?</label>
+    <textarea class="havan-input" id="dojoTxt" placeholder="Applied for a new role - Held my frame with the CMO - Disagreed openly and was right - Pitched an idea nobody asked for..." rows="2">${dojoInput}</textarea>
+    <div class="dojo-tier-btns">${tierBtns}</div>
+    <button class="dojo-log-btn" onclick="logStrike()">⚔ Mark This Strike</button>
+  </div>
+  <div style="text-align:center;font-size:11px;color:var(--text-faint);font-style:italic;line-height:1.75;margin-bottom:12px">Today is victory over yourself of yesterday.<br><span style="font-family:'Cinzel',serif;font-size:8px;letter-spacing:1px">— Kalaripayattu Maxim</span></div>
+  ${recentLog?`<div><div style="font-family:'Cinzel',serif;font-size:7px;letter-spacing:3px;color:var(--text-faint);text-transform:uppercase;text-align:center;margin-bottom:9px">The Record of Strikes</div>${recentLog}</div>`:``}`;
+}
+
+// ─── ADD HABIT ────────────────────────────────────────────────────────────────
+const AMBITIONS=[
+  {r:/(\d+)\s*push[\s-]?up/i,unit:'pushups',max:5},{r:/(\d+)\s*(km|mile)/i,unit:'km',max:1},
+  {r:/(\d+)\s*hour/i,unit:'hours',max:.5},{r:/(\d+)\s*min(?!ute)/i,unit:'minutes',max:10},
+  {r:/(\d+)\s*page/i,unit:'pages',max:2},{r:/(\d+)\s*(squat|situp|burpee|pullup|rep)/i,unit:'reps',max:5},
+];
+function chkAmb(t){for(const p of AMBITIONS){const m=t.match(p.r);if(m&&parseFloat(m[1])>p.max)return{big:true,n:parseFloat(m[1]),unit:p.unit,max:p.max};}return{big:false};}
+
+function renderAdd(){
+  const domChips=DOMAINS.map(d=>`<button class="chip ${form.domain===d.id?'active':''}" onclick="setDomain('${d.id}')">${d.emoji} ${d.label}</button>`).join('');
+  const deity=DOMAINS.find(d=>d.id===form.domain)?.deity||'nataraja';
+  const col=DEITY[deity]?.color||'#c8a458';
+  const warn=coach?`<div class="coach"><div class="coach-t">⚠ The Sculptor Speaks</div>
+    <div class="coach-b">You wrote <strong style="color:#b04020">${coach.n} ${coach.unit}</strong>.<br><br>
+    The stone yields to ten thousand patient strikes, not mighty blows. Begin with <strong style="color:var(--gold)">${coach.max} ${coach.unit}</strong>.</div>
+    <button class="coach-a" onclick="acceptTiny()">I accept — begin with ${coach.max} ${coach.unit}</button></div>`:''
+  const canSub=form.what&&form.why&&form.anchor&&!coach;
+  const prev=canSub?`<div class="prev-card">${natarajaSVG(0,col,52)}<div>
+    <div style="font-family:'Cinzel',serif;font-size:10px;color:var(--gold);letter-spacing:1px">Your Vow</div>
+    <div style="font-size:13px;color:var(--text-dim);margin-top:3px;font-style:italic">"${form.what}"</div>
+    <div style="font-size:10px;color:var(--text-faint);margin-top:2px">${form.anchor}</div>
+    <div style="font-size:9px;color:var(--text-faint);margin-top:5px;font-family:'Cinzel',serif;letter-spacing:.5px">66 days → ${DEITY[deity]?.name} trophy</div>
+  </div></div>`:''
+  return `<div class="sec-head"><div class="sec-lesson">Lesson I - Establish Destiny</div><div class="sec-title">Make Your Vow</div><div class="sec-sub">Begin your 66-day sculpture</div></div>
+  <div class="fsec"><label class="fl">I - Domain</label><div class="chips">${domChips}</div></div>
+  <div class="fsec"><label class="fl">II - The Habit</label>
+    <input class="fi" id="iw" type="text" placeholder="e.g. 50 pushups every morning" value="${form.what}" oninput="onWhat(this.value)">${warn}</div>
+  <div class="fsec"><label class="fl">III - Why This Matters</label>
+    <input class="fi" type="text" placeholder="e.g. energy that compounds over decades" value="${form.why}" oninput="form.why=this.value;render()"></div>
+  <div class="fsec"><label class="fl">IV - Anchor — When & Where</label>
+    <input class="fi" type="text" placeholder="e.g. Right after I pour my morning coffee" value="${form.anchor}" oninput="form.anchor=this.value;render()">
+    <div class="fhint">A specific when+where triples follow-through - Gollwitzer 1999</div></div>
+  ${prev}
+  <button class="sbtn ${canSub?'on':'off'}" onclick="submitHabit()">Consecrate This Vow →</button>`;
+}
+
+// ─── Actions ──────────────────────────────────────────────────────────────────
+function tapHabit(id){
+  const t=today(); const h=state.habits.find(x=>x.id===id); if(!h) return;
+  h.history[t]=!h.history[t]; save();
+  const card=document.getElementById('c-'+id);
+  if(card){
+    if(h.history[t]){
+      card.classList.add('done','strike');
+      const g=card.querySelector('.cglow'); if(g){g.style.opacity='1';setTimeout(()=>g.style.opacity='0',600);}
+      setTimeout(()=>card.classList.remove('strike'),350);
+      if(totalOf(h.history)===GOAL){
+        setTimeout(()=>{alert(`[pray] "${h.name}" — 66 Days Complete!\n\n${DEITY[h.deity||'nataraja']?.name} consecrated in your Trophy Hall.\n\nThe practice continues forever.\n\nॐ नमः शिवाय`);render();},400);
+      }
+    } else card.classList.remove('done');
+    const hc=card.querySelector('.hchk');
+    if(hc){hc.classList.toggle('done',!!h.history[t]);hc.textContent=h.history[t]?'✓':'';}
+  }
+}
+
+function tapKindness(e){
+  const p=state.pudhayal;
+  if(p.lastDate!==today()){p.todayCoins=0;p.lastDate=today();}
+  const prev=p.totalCoins; p.totalCoins++; p.todayCoins++;
+  const justDone=Math.floor(p.totalCoins/COINS_PER_POT)>Math.floor(prev/COINS_PER_POT);
+  save();
+  for(let i=0;i<7;i++){setTimeout(()=>{
+    const c=document.createElement('div'); c.className='coin-burst'; c.textContent='[coin]';
+    const ang=Math.random()*Math.PI*2, dist=45+Math.random()*65;
+    c.style.setProperty('--dx',Math.cos(ang)*dist+'px'); c.style.setProperty('--dy',Math.sin(ang)*dist+'px');
+    const btn=document.getElementById('pudBtn');
+    if(btn){const r=btn.getBoundingClientRect();c.style.left=(r.left+r.width/2)+'px';c.style.top=(r.top+r.height/2)+'px';}
+    document.body.appendChild(c); setTimeout(()=>c.remove(),750);
+  },i*55);}
+  if(justDone){setTimeout(()=>{alert(`[coin] Pudhayal Complete!\n\n1000 acts of goodness.\nThe universe has received your offering.\n\nॐ`);render();},400);}
+  else render();
+}
+
+function setHavanMode(m){havanMode=m;havanInput='';render();}
+function offerToFire(){
+  const txt=(document.getElementById('havanTxt')||{}).value||'';
+  const text=txt.trim(); if(!text) return;
+  if(!state.havan.offerings) state.havan.offerings=[];
+  state.havan.offerings.push({text,type:havanMode,date:today(),ts:Date.now()});
+  state.havan.totalOfferings=(state.havan.totalOfferings||0)+1;
+  havanInput=''; save();
+  const wrap=document.querySelector('[style*="text-align:center;margin-bottom:12px"]');
+  render();
+}
+
+function setGardenType(t){gardenType=t;render();}
+function plantGratitude(){
+  const txt=(document.getElementById('gardenTxt')||{}).value||'';
+  const text=txt.trim(); if(!text) return;
+  if(!state.garden.entries) state.garden.entries=[];
+  state.garden.entries.push({text,type:gardenType,date:today(),ts:Date.now()});
+  state.garden.totalEntries=(state.garden.totalEntries||0)+1;
+  gardenInput=''; save(); render();
+}
+
+function setDojoTier(t){dojoTier=t;render();}
+function logStrike(){
+  const txt=(document.getElementById('dojoTxt')||{}).value||'';
+  const desc=txt.trim(); if(!desc) return;
+  if(!state.dojo.trials) state.dojo.trials=[];
+  state.dojo.trials.push({desc,tier:dojoTier,date:today(),ts:Date.now()});
+  state.dojo.totalTrials=(state.dojo.totalTrials||0)+1;
+  dojoInput=''; save();
+  const wrap=document.querySelector('.dojo-wrap');
+  if(wrap){wrap.style.boxShadow='0 0 25px rgba(200,164,90,0.3)';setTimeout(()=>wrap.style.boxShadow='',700);}
+  render();
+}
+
+function setDomain(d){form.domain=d;render();}
+function onWhat(v){form.what=v;const c=chkAmb(v);coach=c.big?c:null;render();}
+function acceptTiny(){form.what=coach.max+' '+coach.unit;coach=null;render();setTimeout(()=>{const el=document.getElementById('iw');if(el)el.value=form.what;},10);}
+function submitHabit(){
+  if(!form.what||!form.why||!form.anchor||coach) return;
+  const dom=DOMAINS.find(d=>d.id===form.domain);
+  state.habits.push({
+    id:'h'+Date.now(),name:form.what,domain:form.domain,
+    emoji:dom?.emoji||'✨',deity:dom?.deity||'nataraja',
+    anchor:form.anchor,why:form.why,history:{},
+    color:dom?.color||'#c8a458',createdAt:today()
+  });
+  save(); form={what:'',why:'',anchor:'',domain:'spirit'}; coach=null; show('today');
+}
+
+// ─── Boot ──────────────────────────────────────────────────────────────────────
+render();
+</script>
+
+
+
+<script>
+// Cache the page itself for offline use
+if('caches' in window){
+  caches.open('sculptors-path-v1').then(cache => {
+    cache.add(window.location.href).catch(()=>{});
+  });
+}
+</script>
+</body>
+</html>
